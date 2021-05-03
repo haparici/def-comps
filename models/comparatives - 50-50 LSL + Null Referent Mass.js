@@ -64,7 +64,7 @@ var getIndex = function(context, referent) {
 
 var imprecisionCost = .5;
 
-var granularitySelection = function(c) {
+var granularitySelection = function(c, skew) {
 	// we explore possible granularities, starting with the max area differential (last referent size - first referent size) and 
 	// we flip a coin of weight p each time to determine if we want to divide the granularity by 2 (more precision).
 	// less probability mass given to the more precise granularities (which kind of makes sense...)
@@ -95,37 +95,37 @@ var granularitySelection = function(c) {
   }, degs2)
   console.log("DEGS: " + degs3);
   
-	
-	
-	// DELETE THIS IF-ELSE STATEMENT TO TURN OFF SKEWED PRIOR
-	
-  if (degs3.length > 0) {
-  
-//     var masses = map(function(deg) {
-//       return Math.pow(Math.E, deg - degs3[0]);
-//     }, degs3)
-//     console.log(masses);
-    
-//     var deg = categorical(masses, degs3);
-    
-     var deg = uniformDraw(degs3);
+  if (skew) {
+    if (degs3.length > 0) {
 
-    //console.log(deg);
+      //     var masses = map(function(deg) {
+      //       return Math.pow(Math.E, deg - degs3[0]);
+      //     }, degs3)
+      //     console.log(masses);
 
-    // randomly select an offset within the range of sizes spanned by the granularity (eg, if granularity is 10, the offset can be from 0-9).
+      //     var deg = categorical(masses, degs3);
+
+      var deg = uniformDraw(degs3);
+
+      //console.log(deg);
+
+      // randomly select an offset within the range of sizes spanned by the granularity (eg, if granularity is 10, the offset can be from 0-9).
+      var offsets = repeat(Math.ceil(deg), function() {return 0;});
+      var offsets2 = mapIndexed(function(x,y) {return x;}, offsets);
+      var offset = uniformDraw(offsets2);
+
+      return flip(imprecisionCost) ? [deg, offset] : [-1, -1];
+    } else {
+      // ie, no distinct imprecision grouping available.
+      return [-1, -1];
+    }
+  } else {
+    var deg = uniformDraw(degs2);
     var offsets = repeat(Math.ceil(deg), function() {return 0;});
     var offsets2 = mapIndexed(function(x,y) {return x;}, offsets);
     var offset = uniformDraw(offsets2);
-
-    return flip(imprecisionCost) ? [deg, offset] : [-1, -1];
-  } else {
-    // ie, no distinct imprecision grouping available.
-    return [-1, -1];
+    return [deg, offset];
   }
-	
-	// UNCOMMENT THIS STATEMENT TO TURN OFF SKEWED PRIOR
-	
-	// return [deg, offset]
 }
 
 var granularityProcessor = function(c, deg, offset) {
@@ -290,7 +290,7 @@ var speakerVisualiser = function(context, referent) {
   return Infer({method: "enumerate"}, function() {
     // Infer over descriptions--should cost-based description be used here then as well as in the pragmatic speaker?
     var description = descriptionPrior();
-    var g = granularitySelection(context);
+    var g = granularitySelection(context, true);
     var g2 = granularityProcessor(context, g[0], g[1]);
     
     factor(rationality * literalListener(description, g2, context).score(referent));
@@ -305,7 +305,7 @@ var pragmaticListener = function(description, context) {
       // Infer over both granularities AND referents.
       // if I only return distribution on granularities it makes no sense for pS.
       
-      var g = granularitySelection(context);
+      var g = granularitySelection(context, true);
       var g2 = granularityProcessor(context, g[0], g[1]);
       
       //console.log(JSON.stringify(g2));
