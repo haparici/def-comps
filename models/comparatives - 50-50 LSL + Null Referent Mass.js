@@ -95,6 +95,10 @@ var granularitySelection = function(c) {
   }, degs2)
   console.log("DEGS: " + degs3);
   
+	
+	
+	// DELETE THIS IF-ELSE STATEMENT TO TURN OFF SKEWED PRIOR
+	
   if (degs3.length > 0) {
   
 //     var masses = map(function(deg) {
@@ -118,6 +122,10 @@ var granularitySelection = function(c) {
     // ie, no distinct imprecision grouping available.
     return [-1, -1];
   }
+	
+	// UNCOMMENT THIS STATEMENT TO TURN OFF SKEWED PRIOR
+	
+	// return [deg, offset]
 }
 
 var granularityProcessor = function(c, deg, offset) {
